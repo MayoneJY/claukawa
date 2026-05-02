@@ -1,0 +1,7 @@
+__version__ = "0.1.0"
+APP_NAME = "Claukawa"
+APP_AUTHOR = "claukawa"
+GATEWAY_PORT = 17135
+GATEWAY_HOST = "127.0.0.1"
+MAX_SLOTS = 5
+HOOK_MARKER = f"{GATEWAY_HOST}:{GATEWAY_PORT}"
