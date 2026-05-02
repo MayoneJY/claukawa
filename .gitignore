@@ -42,16 +42,16 @@ Thumbs.db
 desktop.ini
 
 # --- Project-specific ---
-# Local sprite-sheet sources users hand to Nano Banana (heavy, regenerable)
+# Local sprite-sheet sources (heavy, regenerable from the tools/ scripts)
 source.png
+source_default.png
 source_anim_*.png
 source_anim_*.jpg
 
 # Chiikawa-derived assets — third-party IP, kept LOCAL only.
 # Anyone wanting the chibi pack must extract their own from a source they
-# legally hold and place it under these paths.
+# legally hold and place it under this path.
 src/claukawa/assets/scenes/chibi/
-src/claukawa/assets/gifs/default/*.png
 
 # Hook payload dump (created only when debug logging is on; never tracked)
 claukawa-hook-dump.jsonl
