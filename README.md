@@ -1,5 +1,7 @@
 # Claukawa
 
+**English** · [한국어](README.ko.md)
+
 Always-on-top desktop indicator that visualizes the working state of your Claude Code sessions. Receives Claude Code hook events through a local HTTP gateway and displays one GIF window per session (up to 5).
 
 ## Quick start
@@ -35,7 +37,20 @@ Each Claude Code hook event is mapped to one of 11 GIF categories:
 | `idle` | Response complete or session ended |
 | `compacting` | Context compaction in progress |
 
-The default GIF pack is a placeholder set generated programmatically. Replace any of them in **Settings → GIF** with your own files.
+The default character pack is a chroma-keyed PNG set bundled with the app.
+
+## Customizing characters
+
+Don't like the default look or want to ship your own character? Replace any category from inside the app.
+
+1. Click the tray icon (Windows, in the `∧` overflow area) or menu-bar icon (macOS) → **Open settings**.
+2. Open the **GIF** tab. All 11 categories are listed with a live preview.
+3. Click **Change…** next to the category you want to swap → pick an image file.
+4. The replacement applies immediately — the next matching hook event will display your image.
+
+Supported formats: PNG (transparency recommended), GIF (animated supported), JPG, WEBP, BMP. If the source has a solid-color background, pre-processing it with a chroma-key step (alpha = transparent) gives the cleanest look.
+
+To revert, click **Default** on the same row.
 
 ## Settings
 
