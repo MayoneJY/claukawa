@@ -79,8 +79,11 @@ def _classify_pre_tool(payload: dict[str, Any]) -> Classification:
         text = os.path.basename(path) if path else pattern
         return Classification("reading", text or tool_name, False)
     if tool_name in _BASH_TOOLS:
+        # Prefer the human-friendly `description` Claude Code attaches to
+        # Bash/PowerShell calls; fall back to the raw command line.
+        desc = (tool_input.get("description") or "").strip()
         cmd = (tool_input.get("command") or "").strip()
-        return Classification("bashing", cmd or tool_name, False)
+        return Classification("bashing", desc or cmd or tool_name, False)
     if tool_name in _WEB_TOOLS:
         target = tool_input.get("url") or tool_input.get("query") or ""
         return Classification("web", target or tool_name, False)

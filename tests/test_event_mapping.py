@@ -34,6 +34,19 @@ def test_pretooluse_bash():
     assert c.bubble_text == "npm test"
 
 
+def test_pretooluse_bash_prefers_description():
+    c = classify({
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+            "command": "cd /tmp && python tools/generate_placeholder_gifs.py 2>&1",
+            "description": "Regenerate MIT-safe placeholder GIFs",
+        },
+    })
+    assert c.category == "bashing"
+    assert c.bubble_text == "Regenerate MIT-safe placeholder GIFs"
+
+
 def test_pretooluse_grep_pattern():
     c = classify({
         "hook_event_name": "PreToolUse",
