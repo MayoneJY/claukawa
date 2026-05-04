@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Callable
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QMovie, QPixmap
 from PySide6.QtWidgets import (
     QButtonGroup,
@@ -34,6 +34,8 @@ _log = logging.getLogger(__name__)
 
 
 class SettingsWindow(QDialog):
+    quit_requested = Signal()
+
     def __init__(
         self,
         settings: SettingsStore,
@@ -54,8 +56,37 @@ class SettingsWindow(QDialog):
         tabs.addTab(self._tab_gif(), t("settings.tab.gif"))
         tabs.addTab(self._tab_hook(), t("settings.tab.hook"))
 
+        # Bottom action row: Quit on the left, Close on the right.
+        actions = QHBoxLayout()
+        btn_quit = QPushButton(t("settings.quit"))
+        btn_quit.setStyleSheet(
+            "QPushButton {"
+            " color: #ffffff; background: rgba(180, 60, 60, 220);"
+            " padding: 6px 14px; border-radius: 6px; font-weight: 600;"
+            "}"
+            "QPushButton:hover { background: rgba(210, 70, 70, 240); }"
+        )
+        btn_quit.clicked.connect(self._on_quit_clicked)
+        actions.addWidget(btn_quit)
+        actions.addStretch(1)
+        btn_close = QPushButton(t("settings.close"))
+        btn_close.clicked.connect(self.close)
+        actions.addWidget(btn_close)
+
         layout = QVBoxLayout(self)
         layout.addWidget(tabs)
+        layout.addLayout(actions)
+
+    def _on_quit_clicked(self) -> None:
+        confirm = QMessageBox.question(
+            self,
+            t("settings.quit.confirm_title"),
+            t("settings.quit.confirm_body"),
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if confirm == QMessageBox.Yes:
+            self.quit_requested.emit()
+            self.close()
 
     # ---- general tab ------------------------------------------------------
     def _tab_general(self) -> QWidget:

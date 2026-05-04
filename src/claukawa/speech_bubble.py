@@ -11,7 +11,6 @@ _BORDER = QColor(255, 255, 255, 50)
 _TEXT = QColor(240, 242, 248)
 _RADIUS = 8
 _PADDING = 8
-_TAIL = 6
 
 
 class SpeechBubble(QWidget):
@@ -33,7 +32,7 @@ class SpeechBubble(QWidget):
         self._label.setWordWrap(True)
         self._label.setAlignment(Qt.AlignCenter)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(_PADDING, _PADDING, _PADDING, _PADDING + _TAIL)
+        layout.setContentsMargins(_PADDING, _PADDING, _PADDING, _PADDING)
         layout.addWidget(self._label)
         self._burst_timer = QTimer(self)
         self._burst_timer.setSingleShot(True)
@@ -75,16 +74,9 @@ class SpeechBubble(QWidget):
     def paintEvent(self, event) -> None:  # noqa: N802
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        body = self.rect().adjusted(0, 0, -1, -_TAIL - 1)
+        body = self.rect().adjusted(0, 0, -1, -1)
         path = QPainterPath()
         path.addRoundedRect(body, _RADIUS, _RADIUS)
-        # tail (small triangle pointing down)
-        cx = self.width() // 2
-        bottom = body.bottom()
-        path.moveTo(cx - 5, bottom)
-        path.lineTo(cx, bottom + _TAIL)
-        path.lineTo(cx + 5, bottom)
-        path.closeSubpath()
         painter.fillPath(path, _BG)
         pen = QPen(_BORDER, 1)
         painter.setPen(pen)

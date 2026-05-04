@@ -147,6 +147,7 @@ class ClaukawaApp:
                 self.settings,
                 on_bubble_trigger_changed=self.window_manager.apply_bubble_trigger,
             )
+            self._settings_window.quit_requested.connect(self.quit)
         self._settings_window.show()
         self._settings_window.raise_()
         self._settings_window.activateWindow()

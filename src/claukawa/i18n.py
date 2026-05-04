@@ -100,6 +100,14 @@ STRINGS: dict[str, dict[str, str]] = {
         "settings.hook.backup_suffix": "\n백업: {backup}",
         "settings.hook.install_failed": "등록 실패: {error}",
         "settings.hook.uninstall_failed": "해제 실패: {error}",
+        # settings — bottom actions
+        "settings.quit": "Claukawa 종료",
+        "settings.close": "닫기",
+        "settings.quit.confirm_title": "Claukawa 종료",
+        "settings.quit.confirm_body": (
+            "Claukawa를 완전히 종료하시겠습니까?\n"
+            "트레이 아이콘도 함께 사라지고, 다음에 사용하려면 다시 실행해야 합니다."
+        ),
         # generic dialog
         "dialog.ok": "확인",
         "dialog.error": "오류",
@@ -195,6 +203,13 @@ STRINGS: dict[str, dict[str, str]] = {
         "settings.hook.backup_suffix": "\nBackup: {backup}",
         "settings.hook.install_failed": "Install failed: {error}",
         "settings.hook.uninstall_failed": "Uninstall failed: {error}",
+        "settings.quit": "Quit Claukawa",
+        "settings.close": "Close",
+        "settings.quit.confirm_title": "Quit Claukawa",
+        "settings.quit.confirm_body": (
+            "Quit Claukawa entirely?\n"
+            "The tray icon will disappear and you'll need to relaunch to use it again."
+        ),
         "dialog.ok": "OK",
         "dialog.error": "Error",
         "dialog.done": "Done",
