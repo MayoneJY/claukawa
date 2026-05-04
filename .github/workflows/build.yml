@@ -91,5 +91,8 @@ jobs:
             ### macOS
             1. Download `Claukawa-${{ github.ref_name }}-mac.zip` and unzip.
             2. Move `Claukawa.app` into `/Applications`.
-            3. Right-click `Claukawa.app` → **Open** (one-time Gatekeeper bypass; the app is ad-hoc signed, not Apple-notarized).
-            4. Subsequent launches: double-click as usual.
+            3. Double-click: macOS will refuse with *"'Claukawa.app' was blocked to protect your Mac"* — this is expected because the app is ad-hoc signed but not Apple-notarized.
+            4. Open **System Settings → Privacy & Security**, scroll to the *Security* section, and click **Open Anyway** next to Claukawa. Authenticate with your password.
+            5. From then on, regular double-click works.
+
+            > On macOS Sequoia (15) and newer, the older "right-click → Open" bypass is blocked. The System Settings approval above is the only way without an Apple Developer ID.

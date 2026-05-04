@@ -14,10 +14,17 @@ Claude Code 세션의 작업 상태를 시각화해주는 항상 위 창 데스�
 
 ### macOS
 
-1. 최신 Release에서 `Claukawa-{version}-mac.dmg` (또는 `.app.zip`) 다운로드.
+1. 최신 Release에서 `Claukawa-{version}-mac.zip` 다운로드 후 압축 해제.
 2. `Claukawa.app`을 `/Applications`로 드래그.
-3. 첫 실행: 우클릭 → **열기** (Gatekeeper 우회. v1은 미서명 빌드).
-4. Windows와 동일 — hook 등록 다이얼로그 승인 후 Claude Code 세션 시작.
+3. 더블클릭하면 **"Mac을 보호하기 위해 'Claukawa.app'을(를) 차단했습니다"** 라는 알림이 뜹니다 (정상 — ad-hoc 서명만 되어있고 Apple 공증은 안 받았기 때문).
+4. **시스템 설정 → 개인정보 보호 및 보안** 열기 → 화면 하단 *보안* 섹션에서 `Mac을 보호하기 위해 'Claukawa.app'을(를) 차단했습니다` 메시지 옆 **그래도 열기** 클릭 → 비밀번호 입력 → 확인.
+
+   ![macOS Gatekeeper 우회 화면](docs/macos-gatekeeper.png)
+
+5. 한 번 허용하면 그 다음부터는 더블클릭으로 정상 실행.
+6. 첫 실행 화면에서 언어 선택 → hook 등록 다이얼로그 승인 → Claude Code 세션 시작.
+
+> **참고**: macOS Sequoia(15)부터는 "우클릭 → 열기" 방식이 막혔고 위처럼 시스템 설정에서 명시적으로 허용해야 합니다.
 
 ## 상태 카테고리
 

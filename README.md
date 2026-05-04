@@ -14,10 +14,17 @@ Always-on-top desktop indicator that visualizes the working state of your Claude
 
 ### macOS
 
-1. Download `Claukawa-{version}-mac.dmg` (or `.app.zip`) from the latest GitHub Release.
+1. Download `Claukawa-{version}-mac.zip` from the latest GitHub Release and unzip.
 2. Drag `Claukawa.app` to `/Applications`.
-3. First launch: right-click → **Open** (Gatekeeper bypass; the app is unsigned in v1).
-4. Same as Windows — accept the hook registration dialog and start a Claude Code session.
+3. Double-click: macOS will refuse with **"'Claukawa.app' was blocked to protect your Mac"** (expected — the app is ad-hoc signed but not Apple-notarized).
+4. Open **System Settings → Privacy & Security**, scroll to the *Security* section. You'll see `'Claukawa.app' was blocked to protect your Mac` — click **Open Anyway** next to it and authenticate with your password.
+
+   ![macOS Gatekeeper bypass screen](docs/macos-gatekeeper.png)
+
+5. After approving once, future launches work via a normal double-click.
+6. On first launch, pick a language → accept the hook registration dialog → start a Claude Code session.
+
+> **Note**: On macOS Sequoia (15) and newer, the older "right-click → Open" trick is blocked. You have to grant the app explicit permission from System Settings as above.
 
 ## Status categories
 
