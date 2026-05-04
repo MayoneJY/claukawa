@@ -16,6 +16,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
 
 from .color_util import color_for
+from .i18n import t
 from .speech_bubble import SpeechBubble
 
 
@@ -133,7 +134,7 @@ class GifWindow(QWidget):
     @staticmethod
     def _format_cwd(cwd: str) -> str:
         if not cwd:
-            return "(no cwd)"
+            return t("gifwin.no_cwd")
         base = os.path.basename(os.path.normpath(cwd))
         if not base:
             base = cwd

@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
+from .i18n import t
+
 CATEGORIES = (
     "session_start",
     "thinking",
@@ -35,10 +37,10 @@ def classify(payload: dict[str, Any]) -> Classification:
     event = payload.get("hook_event_name") or ""
     if event == "SessionStart":
         source = payload.get("source") or "startup"
-        return Classification("session_start", f"세션 시작 ({source})", False)
+        return Classification("session_start", t("bubble.session_start", source=source), False)
     if event == "UserPromptSubmit":
         prompt = (payload.get("prompt") or "").strip()
-        return Classification("thinking", prompt or "생각 중", False)
+        return Classification("thinking", prompt or t("bubble.thinking"), False)
     if event == "PreToolUse":
         # Tool calls made *inside* a subagent carry an `agent_id` (and
         # `agent_type`) linking them to the parent. Don't let those overwrite
@@ -51,16 +53,16 @@ def classify(payload: dict[str, Any]) -> Classification:
     if event == "PostToolUse":
         return Classification(None, "", False)
     if event == "Notification":
-        msg = (payload.get("message") or "입력 대기").strip()
+        msg = (payload.get("message") or t("bubble.notification.fallback")).strip()
         return Classification("waiting_input", msg, False)
     if event == "Stop":
-        return Classification("idle", "응답 완료", True)
+        return Classification("idle", t("bubble.response_done"), True)
     if event == "SessionEnd":
         reason = payload.get("reason") or "other"
-        return Classification("idle", f"세션 종료 ({reason})", True)
+        return Classification("idle", t("bubble.session_end", reason=reason), True)
     if event == "PreCompact":
         trigger = payload.get("trigger") or "auto"
-        return Classification("compacting", f"컨텍스트 압축 ({trigger})", False)
+        return Classification("compacting", t("bubble.compacting", trigger=trigger), False)
     if event == "SubagentStop":
         return Classification(None, "", False)
     return Classification(None, "", False)

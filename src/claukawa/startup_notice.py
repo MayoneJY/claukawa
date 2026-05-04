@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
 
 from . import APP_NAME, GATEWAY_PORT
 from . import gif_resolver
+from .i18n import t
 
 _BG = QColor(28, 30, 38, 235)
 _BORDER = QColor(255, 255, 255, 60)
@@ -89,16 +90,13 @@ class StartupNotice(QWidget):
         text_col = QVBoxLayout()
         text_col.setSpacing(2)
 
-        title = QLabel(f"{APP_NAME} 실행 중")
+        title = QLabel(t("startup.title", app=APP_NAME))
         title.setStyleSheet(
             "color: #ffffff; font-size: 16px; font-weight: 700;"
         )
         text_col.addWidget(title)
 
-        subtitle = QLabel(
-            f"포트 {GATEWAY_PORT}에서 Claude Code 이벤트 대기 중\n"
-            "트레이(작업표시줄 ∧ 영역)에서 설정/종료 가능"
-        )
+        subtitle = QLabel(t("startup.subtitle", port=GATEWAY_PORT))
         subtitle.setStyleSheet("color: #c9ccd6; font-size: 11px;")
         subtitle.setWordWrap(True)
         text_col.addWidget(subtitle)

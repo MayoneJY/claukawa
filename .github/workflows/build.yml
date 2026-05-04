@@ -1,0 +1,95 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to create a Release on tag push
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            spec: build/claukawa-win.spec
+            artifact_name: Claukawa-${{ github.ref_name }}-win.exe
+            artifact_glob: dist/Claukawa.exe
+          - os: macos-latest
+            spec: build/claukawa-mac.spec
+            artifact_name: Claukawa-${{ github.ref_name }}-mac.zip
+            artifact_glob: dist/Claukawa-mac.zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[build,dev]"
+
+      - name: Run unit tests
+        run: pytest -q
+
+      - name: Build with PyInstaller
+        run: pyinstaller ${{ matrix.spec }} --noconfirm --distpath dist --workpath build/_work
+
+      # ---- platform-specific packaging ----------------------------------
+
+      - name: Ad-hoc sign macOS app
+        if: matrix.os == 'macos-latest'
+        run: |
+          codesign --force --deep --sign - dist/Claukawa.app
+          codesign --verify --deep --strict dist/Claukawa.app
+
+      - name: Zip macOS .app
+        if: matrix.os == 'macos-latest'
+        run: |
+          cd dist
+          ditto -c -k --keepParent Claukawa.app Claukawa-mac.zip
+          ls -lh Claukawa-mac.zip
+
+      # ---- upload to artifacts (always) ---------------------------------
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_glob }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            ### Windows
+            Download `Claukawa-${{ github.ref_name }}-win.exe` and double-click.
+
+            ### macOS
+            1. Download `Claukawa-${{ github.ref_name }}-mac.zip` and unzip.
+            2. Move `Claukawa.app` into `/Applications`.
+            3. Right-click `Claukawa.app` → **Open** (one-time Gatekeeper bypass; the app is ad-hoc signed, not Apple-notarized).
+            4. Subsequent launches: double-click as usual.

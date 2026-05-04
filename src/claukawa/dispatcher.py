@@ -6,6 +6,7 @@ from typing import Any
 from PySide6.QtCore import QObject, QTimer, Slot
 
 from .event_mapping import classify, truncate
+from .i18n import t
 from .settings_store import SettingsStore
 from .window_manager import WindowManager
 
@@ -76,7 +77,7 @@ class Dispatcher(QObject):
         if not tid or tid in self._pending:
             return
         tool_name = payload.get("tool_name") or "tool"
-        wait_bubble = truncate(f"권한 대기: {tool_name}", max_chars)
+        wait_bubble = truncate(t("bubble.permission_wait", tool=tool_name), max_chars)
 
         timer = QTimer(self)
         timer.setSingleShot(True)

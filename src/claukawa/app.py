@@ -15,10 +15,13 @@ from . import (
     autostart,
     gif_resolver,
     hook_installer,
+    i18n,
     platform_paths,
 )
 from .dispatcher import Dispatcher
 from .http_gateway import Gateway
+from .i18n import t
+from .language_picker import pick_language
 from .settings_store import SettingsStore
 from .settings_window import SettingsWindow
 from .startup_notice import StartupNotice
@@ -52,6 +55,11 @@ class ClaukawaApp:
         self.lock = QLockFile(str(platform_paths.lock_path()))
         self.lock.setStaleLockTime(0)
         self.settings = SettingsStore()
+
+        # Resolve UI language BEFORE building any GUI so menus/dialogs
+        # render in the user's chosen tongue from the very first frame.
+        self._init_language()
+
         self.window_manager = WindowManager(self.settings)
         self.dispatcher = Dispatcher(self.window_manager, self.settings)
         self.gateway = Gateway()
@@ -63,6 +71,18 @@ class ClaukawaApp:
         self.tray.quit_requested.connect(self.quit)
         self._settings_window: SettingsWindow | None = None
 
+    def _init_language(self) -> None:
+        saved = self.settings.get("language")
+        if saved in i18n.LANGUAGES:
+            i18n.set_language(saved)
+            return
+        # First run (or wiped settings): seed with the OS locale, then ask
+        # the user to confirm or change.
+        i18n.set_language(i18n.detect_system_language())
+        chosen = pick_language(default=i18n.current_language())
+        i18n.set_language(chosen)
+        self.settings.set("language", value=chosen)
+
     def _icon_path(self) -> str:
         from .tray import _icon_path as resolve
 
@@ -73,15 +93,14 @@ class ClaukawaApp:
             QMessageBox.information(
                 None,
                 APP_NAME,
-                f"{APP_NAME}이(가) 이미 실행 중입니다.",
+                t("app.already_running", app=APP_NAME),
             )
             return False
         if not _port_available():
             QMessageBox.critical(
                 None,
                 APP_NAME,
-                f"포트 {GATEWAY_PORT}을(를) 사용할 수 없습니다.\n"
-                f"점유 중인 프로세스를 종료한 뒤 다시 실행해주세요.",
+                t("app.port_unavailable", port=GATEWAY_PORT),
             )
             return False
         return True
@@ -93,11 +112,8 @@ class ClaukawaApp:
         if not hook_installer.is_installed():
             choice = QMessageBox.question(
                 None,
-                f"{APP_NAME} — Hook 등록",
-                "Claude Code 작업 상태를 표시하려면\n"
-                "~/.claude/settings.json 에 hook을 등록해야 합니다.\n\n"
-                "기존 hook은 보존되며, 변경 전 자동 백업됩니다.\n\n"
-                "지금 등록하시겠습니까?",
+                t("firstrun.hook.title", app=APP_NAME),
+                t("firstrun.hook.body"),
                 QMessageBox.Yes | QMessageBox.No,
             )
             if choice == QMessageBox.Yes:
@@ -105,14 +121,17 @@ class ClaukawaApp:
                     backup = hook_installer.install()
                     if backup:
                         self.tray.show_message(
-                            APP_NAME, f"Hook 등록 완료. 백업: {backup.name}"
+                            APP_NAME,
+                            t("firstrun.hook.installed_with_backup", backup=backup.name),
                         )
                     else:
-                        self.tray.show_message(APP_NAME, "Hook이 등록되었습니다.")
+                        self.tray.show_message(APP_NAME, t("firstrun.hook.installed"))
                 except Exception as exc:
                     _log.exception("first-run install failed")
                     QMessageBox.warning(
-                        None, APP_NAME, f"Hook 등록 실패: {exc}\n설정 → Hook 탭에서 다시 시도하세요."
+                        None,
+                        APP_NAME,
+                        t("firstrun.hook.install_failed", error=exc),
                     )
         self.settings.set("first_run_done", value=True)
         if self.settings.get("auto_start") and autostart.is_supported():
@@ -139,7 +158,7 @@ class ClaukawaApp:
             QMessageBox.critical(
                 None,
                 APP_NAME,
-                f"HTTP 게이트웨이 시작 실패 (포트 {GATEWAY_PORT}): {exc}",
+                t("app.gateway_failed", port=GATEWAY_PORT, error=exc),
             )
             return 2
         self.first_run_setup()

@@ -9,6 +9,7 @@ from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QMenu, QSystemTrayIcon
 
 from . import APP_NAME
+from .i18n import t
 
 _log = logging.getLogger(__name__)
 
@@ -46,13 +47,13 @@ class Tray(QObject):
     def _build_menu(self) -> None:
         menu = QMenu()
 
-        act_settings = QAction("설정 열기", menu)
+        act_settings = QAction(t("tray.open_settings"), menu)
         act_settings.triggered.connect(self.open_settings_requested.emit)
         menu.addAction(act_settings)
 
         menu.addSeparator()
 
-        act_quit = QAction("종료", menu)
+        act_quit = QAction(t("tray.quit"), menu)
         act_quit.triggered.connect(self.quit_requested.emit)
         menu.addAction(act_quit)
 

@@ -25,8 +25,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from . import APP_NAME, autostart, gif_resolver, hook_installer
+from . import APP_NAME, autostart, gif_resolver, hook_installer, i18n
 from .gif_resolver import CATEGORIES
+from .i18n import t
 from .settings_store import SettingsStore
 
 _log = logging.getLogger(__name__)
@@ -42,16 +43,16 @@ class SettingsWindow(QDialog):
         super().__init__(parent)
         self._settings = settings
         self._on_bubble_trigger_changed = on_bubble_trigger_changed
-        self.setWindowTitle(f"{APP_NAME} 설정")
+        self.setWindowTitle(t("settings.title", app=APP_NAME))
         self.setMinimumSize(520, 460)
         self._build_ui()
 
     def _build_ui(self) -> None:
         tabs = QTabWidget(self)
-        tabs.addTab(self._tab_general(), "일반")
-        tabs.addTab(self._tab_bubble(), "말풍선")
-        tabs.addTab(self._tab_gif(), "GIF")
-        tabs.addTab(self._tab_hook(), "Hook")
+        tabs.addTab(self._tab_general(), t("settings.tab.general"))
+        tabs.addTab(self._tab_bubble(), t("settings.tab.bubble"))
+        tabs.addTab(self._tab_gif(), t("settings.tab.gif"))
+        tabs.addTab(self._tab_hook(), t("settings.tab.hook"))
 
         layout = QVBoxLayout(self)
         layout.addWidget(tabs)
@@ -61,15 +62,15 @@ class SettingsWindow(QDialog):
         w = QWidget()
         layout = QVBoxLayout(w)
 
-        gb = QGroupBox("슬롯 정책 (5개 다 찼을 때)", w)
+        gb = QGroupBox(t("settings.policy.group"), w)
         v = QVBoxLayout(gb)
         self._policy_group = QButtonGroup(gb)
-        for value, label in [
-            ("idle_only", "idle 세션만 대체 (권장)"),
-            ("lru", "가장 오래된 세션 대체 (LRU)"),
-            ("reject", "새 세션 거부"),
+        for value, label_key in [
+            ("idle_only", "settings.policy.idle_only"),
+            ("lru", "settings.policy.lru"),
+            ("reject", "settings.policy.reject"),
         ]:
-            rb = QRadioButton(label)
+            rb = QRadioButton(t(label_key))
             rb.setProperty("policy", value)
             if self._settings.get("slot_policy") == value:
                 rb.setChecked(True)
@@ -78,20 +79,41 @@ class SettingsWindow(QDialog):
         self._policy_group.buttonClicked.connect(self._on_policy_changed)
         layout.addWidget(gb)
 
-        gb2 = QGroupBox("자동 시작", w)
+        gb2 = QGroupBox(t("settings.autostart.group"), w)
         v2 = QVBoxLayout(gb2)
-        self._autostart_cb = QCheckBox("로그인 시 자동 시작")
+        self._autostart_cb = QCheckBox(t("settings.autostart.label"))
         if autostart.is_supported():
             self._autostart_cb.setChecked(autostart.is_enabled())
             self._autostart_cb.toggled.connect(self._on_autostart_toggled)
         else:
             self._autostart_cb.setEnabled(False)
-            self._autostart_cb.setText("로그인 시 자동 시작 (이 OS에서는 미지원)")
+            self._autostart_cb.setText(t("settings.autostart.unsupported"))
         v2.addWidget(self._autostart_cb)
         layout.addWidget(gb2)
 
+        gb3 = QGroupBox(t("settings.language.group"), w)
+        form3 = QFormLayout(gb3)
+        self._lang_combo = QComboBox()
+        self._lang_combo.addItem(t("lang.korean"), "ko")
+        self._lang_combo.addItem(t("lang.english"), "en")
+        idx = self._lang_combo.findData(self._settings.get("language") or i18n.current_language())
+        if idx >= 0:
+            self._lang_combo.setCurrentIndex(idx)
+        self._lang_combo.currentIndexChanged.connect(self._on_language_changed)
+        form3.addRow(t("settings.language.label"), self._lang_combo)
+        note = QLabel(t("settings.language.note"))
+        note.setStyleSheet("color: #888; font-size: 10px;")
+        note.setWordWrap(True)
+        form3.addRow(note)
+        layout.addWidget(gb3)
+
         layout.addStretch(1)
         return w
+
+    def _on_language_changed(self, _idx: int) -> None:
+        self._settings.set(
+            "language", value=str(self._lang_combo.currentData())
+        )
 
     def _on_policy_changed(self) -> None:
         btn = self._policy_group.checkedButton()
@@ -108,7 +130,11 @@ class SettingsWindow(QDialog):
             self._settings.set("auto_start", value=checked)
         except Exception as exc:
             _log.exception("autostart toggle failed")
-            QMessageBox.warning(self, "오류", f"자동 시작 설정 실패: {exc}")
+            QMessageBox.warning(
+                self,
+                t("dialog.error"),
+                t("settings.autostart.error", error=exc),
+            )
             self._autostart_cb.blockSignals(True)
             self._autostart_cb.setChecked(autostart.is_enabled())
             self._autostart_cb.blockSignals(False)
@@ -118,16 +144,16 @@ class SettingsWindow(QDialog):
         w = QWidget()
         layout = QVBoxLayout(w)
 
-        gb = QGroupBox("표시 트리거", w)
+        gb = QGroupBox(t("settings.bubble.trigger.group"), w)
         v = QVBoxLayout(gb)
         self._trigger_group = QButtonGroup(gb)
-        for value, label in [
-            ("hover_only", "마우스를 올렸을 때만 (기본)"),
-            ("event_burst", "이벤트 발생 시 3초 표시 후 숨김"),
-            ("always", "항상 표시"),
-            ("off", "표시 안 함"),
+        for value, label_key in [
+            ("hover_only", "settings.bubble.trigger.hover_only"),
+            ("event_burst", "settings.bubble.trigger.event_burst"),
+            ("always", "settings.bubble.trigger.always"),
+            ("off", "settings.bubble.trigger.off"),
         ]:
-            rb = QRadioButton(label)
+            rb = QRadioButton(t(label_key))
             rb.setProperty("trigger", value)
             if self._settings.get("bubble", "trigger") == value:
                 rb.setChecked(True)
@@ -136,17 +162,17 @@ class SettingsWindow(QDialog):
         self._trigger_group.buttonClicked.connect(self._on_trigger_changed)
         layout.addWidget(gb)
 
-        gb2 = QGroupBox("글자 수 제한", w)
+        gb2 = QGroupBox(t("settings.bubble.maxchars.group"), w)
         form = QFormLayout(gb2)
         self._max_chars = QComboBox()
         for n in (30, 60, 100):
-            self._max_chars.addItem(f"{n}자", n)
+            self._max_chars.addItem(t("settings.bubble.maxchars.option", n=n), n)
         cur = int(self._settings.get("bubble", "max_chars", default=60))
         idx = self._max_chars.findData(cur)
         if idx >= 0:
             self._max_chars.setCurrentIndex(idx)
         self._max_chars.currentIndexChanged.connect(self._on_maxchars_changed)
-        form.addRow("최대 길이", self._max_chars)
+        form.addRow(t("settings.bubble.maxchars.label"), self._max_chars)
         layout.addWidget(gb2)
 
         layout.addStretch(1)
@@ -209,11 +235,11 @@ class SettingsWindow(QDialog):
             self._gif_path_labels[cat] = path_label
             grid.addWidget(path_label, row, 2)
 
-            btn = QPushButton("변경…")
+            btn = QPushButton(t("settings.gif.change"))
             btn.clicked.connect(lambda _, c=cat: self._pick_gif(c))
             grid.addWidget(btn, row, 3)
 
-            reset = QPushButton("기본값")
+            reset = QPushButton(t("settings.gif.default"))
             reset.clicked.connect(lambda _, c=cat: self._reset_gif(c))
             grid.addWidget(reset, row, 4)
 
@@ -223,15 +249,15 @@ class SettingsWindow(QDialog):
     @staticmethod
     def _format_path(p: Path | None) -> str:
         if p is None:
-            return "(GIF 없음)"
+            return t("settings.gif.no_image")
         return str(p)
 
     def _pick_gif(self, category: str) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
-            f"{category} 이미지 선택",
+            t("settings.gif.picker_title", category=category),
             "",
-            "Images (*.png *.gif *.jpg *.jpeg *.webp *.bmp)",
+            t("settings.gif.picker_filter"),
         )
         if not path:
             return
@@ -257,20 +283,16 @@ class SettingsWindow(QDialog):
         layout.addWidget(self._hook_status)
 
         row = QHBoxLayout()
-        btn_install = QPushButton("Hook 등록")
+        btn_install = QPushButton(t("settings.hook.install_btn"))
         btn_install.clicked.connect(self._on_install_hooks)
-        btn_uninstall = QPushButton("Hook 해제")
+        btn_uninstall = QPushButton(t("settings.hook.uninstall_btn"))
         btn_uninstall.clicked.connect(self._on_uninstall_hooks)
         row.addWidget(btn_install)
         row.addWidget(btn_uninstall)
         row.addStretch(1)
         layout.addLayout(row)
 
-        info = QLabel(
-            "Claude Code의 ~/.claude/settings.json에 Claukawa 전용 hook 항목을\n"
-            "별도 matcher 그룹으로 추가합니다. 기존 hook은 보존됩니다.\n"
-            "변경 전 자동으로 백업 파일이 생성됩니다."
-        )
+        info = QLabel(t("settings.hook.info"))
         info.setStyleSheet("color: #888;")
         info.setWordWrap(True)
         layout.addWidget(info)
@@ -282,29 +304,33 @@ class SettingsWindow(QDialog):
     def _refresh_hook_status(self) -> None:
         installed = hook_installer.is_installed()
         self._hook_status.setText(
-            "현재 상태: ✅ 등록됨" if installed else "현재 상태: ⛔ 미등록"
+            t("settings.hook.installed") if installed else t("settings.hook.not_installed")
         )
 
     def _on_install_hooks(self) -> None:
         try:
             backup = hook_installer.install()
-            msg = "Hook이 등록되었습니다."
+            msg = t("settings.hook.installed_msg")
             if backup:
-                msg += f"\n백업: {backup}"
-            QMessageBox.information(self, "완료", msg)
+                msg += t("settings.hook.backup_suffix", backup=backup)
+            QMessageBox.information(self, t("dialog.done"), msg)
         except Exception as exc:
             _log.exception("install failed")
-            QMessageBox.critical(self, "오류", f"등록 실패: {exc}")
+            QMessageBox.critical(
+                self, t("dialog.error"), t("settings.hook.install_failed", error=exc)
+            )
         self._refresh_hook_status()
 
     def _on_uninstall_hooks(self) -> None:
         try:
             backup = hook_installer.uninstall()
-            msg = "Hook이 해제되었습니다."
+            msg = t("settings.hook.uninstalled_msg")
             if backup:
-                msg += f"\n백업: {backup}"
-            QMessageBox.information(self, "완료", msg)
+                msg += t("settings.hook.backup_suffix", backup=backup)
+            QMessageBox.information(self, t("dialog.done"), msg)
         except Exception as exc:
             _log.exception("uninstall failed")
-            QMessageBox.critical(self, "오류", f"해제 실패: {exc}")
+            QMessageBox.critical(
+                self, t("dialog.error"), t("settings.hook.uninstall_failed", error=exc)
+            )
         self._refresh_hook_status()

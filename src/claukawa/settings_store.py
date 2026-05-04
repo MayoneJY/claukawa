@@ -15,6 +15,7 @@ DEFAULTS: dict[str, Any] = {
     "slot_policy": "idle_only",  # idle_only | lru | reject
     "auto_start": False,
     "first_run_done": False,
+    "language": None,  # ko | en | None (=> picker on first run)
     "bubble": {
         "trigger": "hover_only",  # hover_only | event_burst | always | off
         "max_chars": 60,  # 30 | 60 | 100
