@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QGuiApplication
 
 from . import MAX_SLOTS
@@ -18,6 +18,8 @@ SCREEN_MARGIN = 24
 
 
 class WindowManager(QObject):
+    settings_requested = Signal()
+
     def __init__(self, settings: SettingsStore, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._settings = settings
@@ -150,6 +152,7 @@ class WindowManager(QObject):
         win.move(x, y)
         win.dismissed.connect(self.dismiss)
         win.moved.connect(self._persist_position)
+        win.settings_requested.connect(self.settings_requested.emit)
         win.show()
         self._windows[session_id] = win
         return win

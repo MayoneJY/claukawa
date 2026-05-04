@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from PySide6.QtCore import (
@@ -135,6 +136,13 @@ class StartupNotice(QWidget):
                 geom.center().y() - self.height() // 2,
             )
         self.show()
+        if sys.platform == "darwin":
+            try:
+                from .gif_window import _pin_macos_panel
+
+                _pin_macos_panel(int(self.winId()))
+            except Exception:  # pragma: no cover
+                pass
         self._fade_in.start()
         self._dismiss_timer.start(_VISIBLE_MS)
 

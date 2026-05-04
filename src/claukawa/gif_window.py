@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ctypes
+import ctypes.util
 import os
 import sys
 import time
@@ -9,15 +10,68 @@ from typing import Callable
 
 from PySide6.QtCore import QPoint, QSize, Qt, Signal
 from PySide6.QtGui import (
+    QAction,
     QMouseEvent,
     QMovie,
     QPixmap,
 )
-from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLabel, QMenu, QPushButton, QVBoxLayout, QWidget
 
 from .color_util import color_for
 from .i18n import t
 from .speech_bubble import SpeechBubble
+
+
+def _pin_macos_panel(win_id: int) -> None:
+    """Stop the underlying NSPanel from auto-hiding when the app loses focus,
+    pin it above other apps' windows, and let it follow across all Spaces.
+
+    Qt maps Qt.Tool to an NSPanel on macOS, which by default disappears the
+    moment the user clicks another application. We flip hidesOnDeactivate
+    off and bump the window level to floating.
+    """
+    try:
+        objc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("objc"))
+    except (OSError, TypeError):
+        return
+
+    objc.sel_registerName.restype = ctypes.c_void_p
+    objc.sel_registerName.argtypes = [ctypes.c_char_p]
+    objc.objc_msgSend.restype = ctypes.c_void_p
+
+    # Qt's winId() on macOS returns an NSView*; grab its NSWindow.
+    objc.objc_msgSend.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+    nswindow = objc.objc_msgSend(
+        ctypes.c_void_p(win_id),
+        objc.sel_registerName(b"window"),
+    )
+    if not nswindow:
+        return
+
+    # setHidesOnDeactivate:NO
+    objc.objc_msgSend.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+    objc.objc_msgSend(
+        ctypes.c_void_p(nswindow),
+        objc.sel_registerName(b"setHidesOnDeactivate:"),
+        False,
+    )
+
+    # setCollectionBehavior: canJoinAllSpaces(1) | stationary(16) | fullScreenAuxiliary(256)
+    objc.objc_msgSend.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_ulong]
+    objc.objc_msgSend(
+        ctypes.c_void_p(nswindow),
+        objc.sel_registerName(b"setCollectionBehavior:"),
+        1 | 16 | 256,
+    )
+
+    # setLevel: NSFloatingWindowLevel (=3) — sits above normal app windows
+    # but below the system menu bar.
+    objc.objc_msgSend.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_long]
+    objc.objc_msgSend(
+        ctypes.c_void_p(nswindow),
+        objc.sel_registerName(b"setLevel:"),
+        3,
+    )
 
 
 def _strip_win11_chrome(hwnd: int) -> None:
@@ -53,6 +107,7 @@ TOTAL_HEIGHT = GIF_SIZE + LABEL_HEIGHT + WINDOW_PADDING * 2 + 4
 class GifWindow(QWidget):
     dismissed = Signal(str)  # session_id
     moved = Signal(str)  # session_id (for persisting position)
+    settings_requested = Signal()
 
     def __init__(
         self,
@@ -249,6 +304,39 @@ class GifWindow(QWidget):
             return
         super().mousePressEvent(event)
 
+    def contextMenuEvent(self, event) -> None:  # noqa: N802
+        # Parent the menu to None so it doesn't inherit the widget's
+        # transparent stylesheet, then dress it explicitly.
+        menu = QMenu()
+        menu.setStyleSheet(
+            "QMenu {"
+            " background-color: rgb(38, 40, 48);"
+            " color: rgb(240, 242, 248);"
+            " border: 1px solid rgba(255, 255, 255, 50);"
+            " border-radius: 6px;"
+            " padding: 4px;"
+            "}"
+            "QMenu::item {"
+            " padding: 6px 18px; border-radius: 4px;"
+            "}"
+            "QMenu::item:selected {"
+            " background-color: rgb(70, 110, 200);"
+            "}"
+            "QMenu::separator {"
+            " height: 1px; background: rgba(255, 255, 255, 40);"
+            " margin: 4px 6px;"
+            "}"
+        )
+        act_settings = QAction(t("gifwin.open_settings"), menu)
+        act_settings.triggered.connect(self.settings_requested.emit)
+        menu.addAction(act_settings)
+        menu.addSeparator()
+        act_close = QAction(t("gifwin.close"), menu)
+        act_close.triggered.connect(self._on_close_clicked)
+        menu.addAction(act_close)
+        menu.exec(event.globalPos())
+        event.accept()
+
     def mouseMoveEvent(self, event: QMouseEvent) -> None:  # noqa: N802
         if self._drag_origin is not None and event.buttons() & Qt.LeftButton:
             new_pos = event.globalPosition().toPoint() - self._drag_origin
@@ -284,5 +372,11 @@ class GifWindow(QWidget):
             try:
                 _strip_win11_chrome(int(self.winId()))
                 self._chrome_stripped = True
+            except Exception:  # pragma: no cover
+                pass
+        elif sys.platform == "darwin" and not getattr(self, "_macos_pinned", False):
+            try:
+                _pin_macos_panel(int(self.winId()))
+                self._macos_pinned = True
             except Exception:  # pragma: no cover
                 pass

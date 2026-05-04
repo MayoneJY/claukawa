@@ -115,6 +115,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "bubble.permission_wait": "권한 대기: {tool}",
         # gif window
         "gifwin.no_cwd": "(no cwd)",
+        "gifwin.close": "창 닫기",
+        "gifwin.open_settings": "설정 열기",
     },
     "en": {
         "tray.open_settings": "Open settings",
@@ -204,6 +206,8 @@ STRINGS: dict[str, dict[str, str]] = {
         "bubble.notification.fallback": "Awaiting input",
         "bubble.permission_wait": "Awaiting permission: {tool}",
         "gifwin.no_cwd": "(no cwd)",
+        "gifwin.close": "Close window",
+        "gifwin.open_settings": "Open settings",
     },
 }
 

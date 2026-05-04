@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
@@ -49,6 +51,17 @@ class SpeechBubble(QWidget):
     def show_persistent(self) -> None:
         self._burst_timer.stop()
         self.show()
+
+    def showEvent(self, event) -> None:  # noqa: N802
+        super().showEvent(event)
+        if sys.platform == "darwin" and not getattr(self, "_macos_pinned", False):
+            try:
+                from .gif_window import _pin_macos_panel
+
+                _pin_macos_panel(int(self.winId()))
+                self._macos_pinned = True
+            except Exception:  # pragma: no cover
+                pass
 
     def position_above(self, anchor: QWidget) -> None:
         if not anchor.isVisible():

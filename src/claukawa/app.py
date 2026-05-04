@@ -61,6 +61,7 @@ class ClaukawaApp:
         self._init_language()
 
         self.window_manager = WindowManager(self.settings)
+        self.window_manager.settings_requested.connect(self.show_settings)
         self.dispatcher = Dispatcher(self.window_manager, self.settings)
         self.gateway = Gateway()
         self.gateway.signals.eventReceived.connect(
