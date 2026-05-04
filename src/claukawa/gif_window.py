@@ -11,8 +11,11 @@ from typing import Callable
 from PySide6.QtCore import QPoint, QSize, Qt, Signal
 from PySide6.QtGui import (
     QAction,
+    QColor,
     QMouseEvent,
     QMovie,
+    QPainter,
+    QPainterPath,
     QPixmap,
 )
 from PySide6.QtWidgets import QLabel, QMenu, QPushButton, QVBoxLayout, QWidget
@@ -102,6 +105,14 @@ LABEL_HEIGHT = 18
 WINDOW_PADDING = 6
 TOTAL_WIDTH = GIF_SIZE + WINDOW_PADDING * 2
 TOTAL_HEIGHT = GIF_SIZE + LABEL_HEIGHT + WINDOW_PADDING * 2 + 4
+
+# Effectively-invisible fill on Windows so transparent pixels around the
+# chibi PNG still register hover events. Without this, Windows treats
+# fully-transparent pixels as click-through, causing leaveEvent to fire
+# the moment the mouse leaves the character's opaque silhouette — which
+# would hide the X button before the user can click it.
+_HIT_FILL = QColor(0, 0, 0, 2)
+_HIT_RADIUS = 12
 
 
 class GifWindow(QWidget):
@@ -365,6 +376,18 @@ class GifWindow(QWidget):
         super().moveEvent(event)
         if self._bubble.isVisible():
             self._bubble.position_above(self)
+
+    def paintEvent(self, event) -> None:  # noqa: N802
+        # Paint a near-invisible (alpha=2) rounded rect across the whole
+        # window. The visual effect is undetectable, but it keeps Windows
+        # from treating transparent pixels as click-through — so the
+        # mouse can travel from the chibi to the X button without
+        # leaveEvent firing.
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        path.addRoundedRect(self.rect(), _HIT_RADIUS, _HIT_RADIUS)
+        painter.fillPath(path, _HIT_FILL)
 
     def showEvent(self, event) -> None:  # noqa: N802
         super().showEvent(event)
