@@ -26,12 +26,14 @@ build/_work/
 build/*.toc
 build/*.pkg
 build/warn-*.txt
+build/claukawa-*/
 dist/
 *.spec.bak
 
 # --- IDE / editor ---
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
 *~
